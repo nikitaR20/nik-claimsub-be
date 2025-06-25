@@ -1,0 +1,31 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.env
+
+# Environment settings / secrets
+.env.*
+*.env
+
+# VS Code or other IDE settings
+.vscode/
+.idea/
+*.swp
+
+# MacOS or Windows system files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Pytest cache
+.pytest_cache/
+
+# Migrations or temp db (optional if using alembic/sqlite)
+migrations/
+*.sqlite3
