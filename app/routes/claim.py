@@ -9,3 +9,7 @@ def create_claim():
 @router.get("/claims/{claim_id}")
 def get_claim(claim_id: int):
     return {"message": f"Hello claims {claim_id}"}
+
+@router.get("/claims")
+def get_claims():
+    return {"message": "Hello GET claims"}
