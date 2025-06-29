@@ -1,13 +1,11 @@
 from fastapi import FastAPI
-from app.routes import claim, provider, segment
+from app import models, database
+from app.routers import claim, provider, segment
+
+models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
 
-@app.get("/hello")
-def say_hello():
-    return {"message": "Hello you"}
-
-# Register API routers
-app.include_router(claim.router)
 app.include_router(provider.router)
 app.include_router(segment.router)
+app.include_router(claim.router)

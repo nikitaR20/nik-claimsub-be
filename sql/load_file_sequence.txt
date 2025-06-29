@@ -1,0 +1,8 @@
+Load the files following the sequence-
+providers
+risk ratings
+claims
+claim_riders
+claim_claim_rider
+customer_segments
+provider_customer_segments

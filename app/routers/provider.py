@@ -1,0 +1,17 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from typing import List
+from app import models, database, schemas
+
+router = APIRouter(prefix="/providers", tags=["Providers"])
+
+def get_db():
+    db = database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@router.get("/", response_model=List[schemas.ProviderOut])
+def get_providers(db: Session = Depends(get_db)):
+    return db.query(models.Provider).all()
