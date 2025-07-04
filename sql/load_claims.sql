@@ -1,0 +1,1 @@
+\COPY claims(claim_id, provider_id, risk_id, status, submission_date,summary, ex_gratia_flag, appeal_case_flag, reason_code, reason_description,last_status_update_date,created_at,updated_at) FROM 'C://full/path/to/nik-claimsub-be/csv/claims.csv' DELIMITER ',' CSV HEADER;

@@ -1,0 +1,1 @@
+\COPY claim_riders(rider_id, name, description,created_at,updated_at) FROM 'C:/full/path/to/nik-claimsub-be/csv/claim_riders.csv' DELIMITER ',' CSV HEADER;

@@ -90,7 +90,7 @@ venv.bak/
 .ipynb_checkpoints
 
 # MySQL / PostgreSQL
-*.sql
+
 *.dump
 
 # Logs
