@@ -5,6 +5,7 @@ from app import models, database, schemas
 
 router = APIRouter(prefix="/providers", tags=["Providers"])
 
+
 def get_db():
     db = database.SessionLocal()
     try:
@@ -12,6 +13,10 @@ def get_db():
     finally:
         db.close()
 
+
 @router.get("/", response_model=List[schemas.ProviderOut])
 def get_providers(db: Session = Depends(get_db)):
+    """
+    Retrieve list of all providers.
+    """
     return db.query(models.Provider).all()

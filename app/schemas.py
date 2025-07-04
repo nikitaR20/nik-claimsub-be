@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 from uuid import UUID
 from datetime import date, datetime
-from typing import Optional, List
+from typing import Optional
+
 
 class ProviderOut(BaseModel):
     provider_id: UUID
@@ -11,6 +12,7 @@ class ProviderOut(BaseModel):
 
     class Config:
         orm_mode = True
+
 
 class SegmentOut(BaseModel):
     segment_id: UUID
@@ -33,8 +35,10 @@ class ClaimBase(BaseModel):
     reason_description: Optional[str] = None
     last_status_update_date: Optional[datetime] = None
 
+
 class ClaimCreate(ClaimBase):
     pass
+
 
 class ClaimOut(ClaimBase):
     claim_id: UUID

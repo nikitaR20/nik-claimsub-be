@@ -115,3 +115,68 @@ Thumbs.db
 # Ignore CSVs if you want to avoid pushing big data files
 csv/
 *.csv
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment folders
+env/
+venv/
+ENV/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Logs
+*.log
+
+# Environment variables file
+.env
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# pytest cache
+.pytest_cache/
+
+# mypy cache
+.mypy_cache/
+
+# pyre type checker
+.pyre/
+
+# celery beat schedule files
+celerybeat-schedule
+
+# SQLite DBs (if you use any)
+*.sqlite3
+db.sqlite3
+
+# PyInstaller
+*.manifest
+*.spec
+
+# pipenv files - keep Pipfile and Pipfile.lock tracked
+# but exclude virtual environment folder if it’s inside the project directory
+
+# Others
+*.bak
+*.tmp
