@@ -23,3 +23,6 @@ app.add_middleware(
 app.include_router(provider.router)
 app.include_router(segment.router)
 app.include_router(claim.router)
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the Claims Backend API"}
