@@ -3,17 +3,17 @@ from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
 from app import models, schemas, database
-
+from app.database import get_db
 router = APIRouter(prefix="/claims", tags=["Claims"])
 
-
+'''
 def get_db():
     db = database.SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
+'''
 
 @router.get("/", response_model=List[schemas.ClaimOut])
 def get_all_claims(

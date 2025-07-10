@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from app import models, database
-from app.routers import claim, provider, segment
+from app.routers import claim, provider, segment, claim_documents
 
 # Create database tables
 models.Base.metadata.create_all(bind=database.engine)
@@ -26,3 +25,5 @@ app.include_router(claim.router)
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Claims Backend API"}
+
+app.include_router(claim_documents.router)

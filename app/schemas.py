@@ -1,8 +1,9 @@
-from pydantic import BaseModel
-from uuid import UUID
 from datetime import date, datetime
 from typing import Optional
-
+from pydantic import BaseModel, Field
+from typing import Optional
+from uuid import UUID
+from datetime import datetime
 
 class ProviderOut(BaseModel):
     provider_id: UUID
@@ -42,6 +43,27 @@ class ClaimCreate(ClaimBase):
 
 class ClaimOut(ClaimBase):
     claim_id: UUID
+
+    class Config:
+        orm_mode = True
+from pydantic import BaseModel, Field
+from typing import Optional
+from uuid import UUID
+from datetime import datetime
+
+class ClaimDocumentCreate(BaseModel):
+    claim_id: UUID
+    document_type: str = Field(..., description="Type of document uploaded")
+    description: Optional[str] = None
+
+class ClaimDocumentResponse(BaseModel):
+    document_id: UUID
+    claim_id: UUID
+    document_type: str
+    file_name: str
+    content_type: str
+    description: Optional[str]
+    uploaded_at: datetime
 
     class Config:
         orm_mode = True
