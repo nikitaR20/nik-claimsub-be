@@ -67,3 +67,5 @@ class ClaimDocument(Base):
     content_type = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
+    # New column to store redacted OCR text
+    ocr_redacted_text = Column(Text, nullable=True)

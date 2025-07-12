@@ -64,6 +64,6 @@ class ClaimDocumentResponse(BaseModel):
     content_type: str
     description: Optional[str]
     uploaded_at: datetime
-
+    ocr_redacted_text: Optional[str]
     class Config:
         orm_mode = True
