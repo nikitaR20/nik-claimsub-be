@@ -113,8 +113,7 @@ Thumbs.db
 *.db
 
 # Ignore CSVs if you want to avoid pushing big data files
-csv/
-*.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app import models, database
 from app.routers import claim, provider, segment, claim_documents
+from app import models, database
 
 # Create database tables
 models.Base.metadata.create_all(bind=database.engine)
