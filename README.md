@@ -180,17 +180,15 @@ Follow these steps carefully to load your project data into PostgreSQL:
 
 ## ▶️ Step 7: Run the Backend
 
-1. Make sure your virtual environment is active (`venv` should show in terminal).
-2. Run this from inside `backend_project`:
+1. Make sure your virtual environment is active (`venv` should show in terminal).Type pipenv shell to confirm.
+2. Run this from inside `backend_project`(type in the terminal):
 
-```bash
-python -m app.main
-```
+  uvicorn app.main:app --reload
 
 3. If successful, backend runs at:
 
 ```
-http://localhost:5000
+http://localhost:8000
 ```
 
 Keep this terminal open while working.
