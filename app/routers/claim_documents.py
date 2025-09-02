@@ -6,17 +6,10 @@ from app import models, schemas
 from app.database import get_db
 from app.utils.ocr_pii import ocr_extract_text, redact_pii
 
-
-router = APIRouter(
-    prefix="/claim-documents",
-    tags=["claim-documents"],
-)
+router = APIRouter(prefix="/claim-documents", tags=["Claim Documents"])
 
 @router.get("/{claim_id}", response_model=List[schemas.ClaimDocumentResponse])
-def get_documents_for_claim(
-    claim_id: UUID,
-    db: Session = Depends(get_db)
-):
+def get_documents_for_claim(claim_id: UUID, db: Session = Depends(get_db)):
     documents = db.query(models.ClaimDocument).filter(models.ClaimDocument.claim_id == claim_id).all()
     return documents or []
 
@@ -29,20 +22,17 @@ async def upload_claim_document(
     db: Session = Depends(get_db)
 ):
     if file.content_type not in ["application/pdf", "image/jpeg", "image/png"]:
-        raise HTTPException(status_code=400, detail="Unsupported file type. Allowed types: PDF, JPEG, PNG.")
+        raise HTTPException(status_code=400, detail="Unsupported file type.")
 
     file_data = await file.read()
-    if len(file_data) > 10 * 1024 * 1024:  # 10MB limit
-        raise HTTPException(status_code=400, detail="File size exceeds 10MB limit.")
+    if len(file_data) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large.")
 
     claim = db.query(models.Claim).filter(models.Claim.claim_id == claim_id).first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found.")
 
-    # OCR extraction
     extracted_text = ocr_extract_text(file_data, file.content_type)
-
-    # PII redaction
     redacted_text = redact_pii(extracted_text)
 
     new_doc = models.ClaimDocument(
@@ -57,5 +47,4 @@ async def upload_claim_document(
     db.add(new_doc)
     db.commit()
     db.refresh(new_doc)
-
     return new_doc
