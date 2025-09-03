@@ -3,7 +3,7 @@ from sqlalchemy import Column, String, Text, Boolean, Date, DateTime, LargeBinar
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.sql import func
 from app.database import Base
-
+from sqlalchemy.orm import relationship
 class Patient(Base):
     __tablename__ = "patients"
 
@@ -15,7 +15,7 @@ class Patient(Base):
     income = Column("PatientIncome", Float)
     marital_status = Column("PatientMaritalStatus", String)
     employment_status = Column("PatientEmploymentStatus", String)
-
+    claims = relationship("Claim", back_populates="patient")
 
 class Provider(Base):
     __tablename__ = "providers"
@@ -25,7 +25,8 @@ class Provider(Base):
     last_name = Column("ProviderLastName", String(100))
     specialty = Column("ProviderSpeciality", String(100))
     location = Column("ProviderLocation", String(255))
-
+    # Relationship to Claims
+    claims = relationship("Claim", back_populates="provider")
     #created_at = Column(DateTime(timezone=True), server_default=func.now())
     #updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -45,20 +46,22 @@ class Claim(Base):
     __tablename__ = "claims"
 
     claim_id = Column("ClaimID", UUID(as_uuid=True), primary_key=True)
-    patient_id = Column("PatientID", UUID(as_uuid=True))
-    provider_id = Column("ProviderID", UUID(as_uuid=True))
+    #patient_id = Column("PatientID", UUID(as_uuid=True))
+    #provider_id = Column("ProviderID", UUID(as_uuid=True))
+    patient_id = Column("PatientID", UUID(as_uuid=True), ForeignKey("patients.PatientID"), nullable=False)
+    provider_id = Column("ProviderID", UUID(as_uuid=True), ForeignKey("providers.ProviderID"), nullable=False)
     claim_amount = Column("ClaimAmount", Float)
     claim_date = Column("ClaimDate", Date)
     diagnosis_code = Column("DiagnosisCode", String)
     procedure_code = Column("ProcedureCode", String)
-    patient_age = Column("PatientAge", Float)
-    patient_gender = Column("PatientGender", String(10))
-    provider_specialty = Column("ProviderSpeciality", String(255))
+    #patient_age = Column("PatientAge", Float)
+    #patient_gender = Column("PatientGender", String(10))
+    #provider_specialty = Column("ProviderSpeciality", String(255))
     claim_status = Column("ClaimStatus", String(50))
-    patient_income = Column("PatientIncome", Float)
-    patient_marital_status = Column("PatientMaritalStatus", String(20))
-    patient_employment_status = Column("PatientEmploymentStatus", String(50))
-    provider_location = Column("ProviderLocation", String(255))
+    #patient_income = Column("PatientIncome", Float)
+    #patient_marital_status = Column("PatientMaritalStatus", String(20))
+    #patient_employment_status = Column("PatientEmploymentStatus", String(50))
+    #provider_location = Column("ProviderLocation", String(255))
     claim_type = Column("ClaimType", String(50))
     claim_submission_method = Column("ClaimSubmissionMethod", String(50))
     predicted_payout = Column("PredictedPayout", Float)
@@ -70,7 +73,9 @@ class Claim(Base):
     fraud_reason = Column("FraudReason", Text)
     created_at = Column("CreatedAt", TIMESTAMP(timezone=True), server_default=func.now())
     updated_at = Column("UpdatedAt", TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
-
+    patient = relationship("Patient", back_populates="claims")
+    provider = relationship("Provider", back_populates="claims")
+    
 class ClaimDocument(Base):
     __tablename__ = "claim_documents"
 
