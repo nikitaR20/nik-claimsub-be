@@ -1,54 +1,63 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from uuid import UUID
-from app import models, schemas, database
+from app import models, schemas
 from app.database import get_db
+
 router = APIRouter(prefix="/claims", tags=["Claims"])
 
-'''
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-'''
-
+# -------------------- GET ALL CLAIMS --------------------
 @router.get("/", response_model=List[schemas.ClaimOut])
-def get_all_claims(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100),
-    db: Session = Depends(get_db),
-):
-    db.expire_all()
+def get_all_claims(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     claims = (
         db.query(models.Claim)
-        .order_by(models.Claim.created_at.desc())  # 🟢 ORDER BY latest
+        .options(joinedload(models.Claim.patient), joinedload(models.Claim.provider))
+        .order_by(models.Claim.claim_date.desc())
         .offset(skip)
         .limit(limit)
         .all()
     )
     return claims
 
-@router.get("/{claim_id}", response_model=schemas.ClaimOut)
-def get_claim(claim_id: UUID, db: Session = Depends(get_db)):
-    """
-    Retrieve a single claim by ID.
-    """
-    claim = db.query(models.Claim).filter(models.Claim.claim_id == claim_id).first()
-    if not claim:
-        raise HTTPException(status_code=404, detail="Claim not found")
-    return claim
-
-
+# -------------------- CREATE OR UPDATE CLAIM --------------------
 @router.post("/", response_model=schemas.ClaimOut)
-def create_claim(claim: schemas.ClaimCreate, db: Session = Depends(get_db)):
-    """
-    Create a new claim and return the created claim with ID.
-    """
-    new_claim = models.Claim(**claim.dict())
-    db.add(new_claim)
-    db.commit()
-    db.refresh(new_claim)
-    return new_claim
+def create_or_update_claim(claim: schemas.ClaimCreate, db: Session = Depends(get_db)):
+    # Check if patient exists
+    patient = db.query(models.Patient).filter(models.Patient.patient_id == claim.patient_id).first()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    # Check if provider exists
+    provider = db.query(models.Provider).filter(models.Provider.provider_id == claim.provider_id).first()
+    if not provider:
+        raise HTTPException(status_code=404, detail="Provider not found")
+
+    # If claim_id exists -> update
+    if getattr(claim, "claim_id", None):
+        existing_claim = db.query(models.Claim).filter(models.Claim.claim_id == claim.claim_id).first()
+        if not existing_claim:
+            raise HTTPException(status_code=404, detail="Claim not found")
+        
+        # Update all fields
+        for field, value in claim.dict(exclude_unset=True).items():
+            setattr(existing_claim, field, value)
+        
+        db.commit()
+        db.refresh(existing_claim)
+        updated_claim = existing_claim
+    else:
+        # Create new claim
+        new_claim = models.Claim(**claim.dict())
+        db.add(new_claim)
+        db.commit()
+        db.refresh(new_claim)
+        updated_claim = new_claim
+
+    # Return claim with nested patient and provider
+    return (
+        db.query(models.Claim)
+        .options(joinedload(models.Claim.patient), joinedload(models.Claim.provider))
+        .filter(models.Claim.claim_id == updated_claim.claim_id)
+        .first()
+    )
