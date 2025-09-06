@@ -1,49 +1,63 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+# app/routers/claim_documents.py
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
-from uuid import UUID
 from typing import List
+from uuid import UUID
+from datetime import datetime
 from app import models, schemas
 from app.database import get_db
-from app.utils.ocr_pii import ocr_extract_text, redact_pii
 
 router = APIRouter(prefix="/claim-documents", tags=["Claim Documents"])
 
-@router.get("/{claim_id}", response_model=List[schemas.ClaimDocumentResponse])
-def get_documents_for_claim(claim_id: UUID, db: Session = Depends(get_db)):
-    documents = db.query(models.ClaimDocument).filter(models.ClaimDocument.claim_id == claim_id).all()
-    return documents or []
+# ----------------- GET ALL DOCUMENTS -----------------
+@router.get("/", response_model=List[schemas.ClaimDocumentResponse])
+def get_claim_documents(db: Session = Depends(get_db)):
+    return db.query(models.ClaimDocument).all()
 
+# ------------- GET DOCUMENTS BY CLAIM ID -------------
+@router.get("/{claim_id}", response_model=List[schemas.ClaimDocumentResponse])
+def get_documents_by_claim(claim_id: str, db: Session = Depends(get_db)):
+    # Convert to UUID
+    try:
+        claim_uuid = UUID(claim_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid claim_id format")
+
+    # Query documents
+    docs = db.query(models.ClaimDocument).filter(models.ClaimDocument.claim_id == claim_uuid).all()
+    if not docs:
+        raise HTTPException(status_code=404, detail="No documents found for this claim")
+    return docs
+
+# ------------------- UPLOAD DOCUMENT -------------------
 @router.post("/upload", response_model=schemas.ClaimDocumentResponse)
-async def upload_claim_document(
-    claim_id: UUID = Form(...),
+async def upload_document(
+    claim_id: str = Form(...),
     document_type: str = Form(...),
-    description: str = Form(None),
+    description: str = Form(""),
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    if file.content_type not in ["application/pdf", "image/jpeg", "image/png"]:
-        raise HTTPException(status_code=400, detail="Unsupported file type.")
+    # Convert claim_id to UUID
+    try:
+        claim_uuid = UUID(claim_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid claim_id format")
 
+    # Read file bytes
     file_data = await file.read()
-    if len(file_data) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File too large.")
 
-    claim = db.query(models.Claim).filter(models.Claim.claim_id == claim_id).first()
-    if not claim:
-        raise HTTPException(status_code=404, detail="Claim not found.")
-
-    extracted_text = ocr_extract_text(file_data, file.content_type)
-    redacted_text = redact_pii(extracted_text)
-
+    # Create new document
     new_doc = models.ClaimDocument(
-        claim_id=claim_id,
+        claim_id=claim_uuid,
         document_type=document_type,
         file_name=file.filename,
-        file_data=file_data,
         content_type=file.content_type,
         description=description,
-        ocr_redacted_text=redacted_text
+        file_data=file_data,
+        uploaded_at=datetime.utcnow()
     )
+
     db.add(new_doc)
     db.commit()
     db.refresh(new_doc)
