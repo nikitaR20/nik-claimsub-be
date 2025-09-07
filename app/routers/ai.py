@@ -5,6 +5,9 @@ from app.ai.semantic_search import semantic_search
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 
+# Initialize semantic search on module load
+#initialize_search()
+
 class CoverageNotesPayload(BaseModel):
     coverage_notes: str
 
@@ -14,9 +17,10 @@ def suggest_codes(payload: CoverageNotesPayload):
     if not notes:
         raise HTTPException(status_code=400, detail="Coverage notes are required")
 
+    # Returns lists of dicts for ICD-10 and procedure codes
     icd10_suggestions, proc_suggestions = semantic_search(notes, top_n=3)
 
     return {
-        "suggested_diagnosis_codes": icd10_suggestions,
-        "suggested_procedure_codes": proc_suggestions
+        "suggested_diagnosis_codes": icd10_suggestions,      # list of {code, description}
+        "suggested_procedure_codes": proc_suggestions       # list of {code, description}
     }
