@@ -1,61 +1,81 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+# app/routers/claim_documents.py
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
-from uuid import UUID
 from typing import List
+from uuid import UUID
+from datetime import datetime
 from app import models, schemas
 from app.database import get_db
-from app.utils.ocr_pii import ocr_extract_text, redact_pii
+from io import BytesIO
+from fastapi.responses import StreamingResponse
 
+router = APIRouter(prefix="/claim-documents", tags=["Claim Documents"])
 
-router = APIRouter(
-    prefix="/claim-documents",
-    tags=["claim-documents"],
-)
+# ----------------- GET ALL DOCUMENTS -----------------
+@router.get("/", response_model=List[schemas.ClaimDocumentResponse])
+def get_claim_documents(db: Session = Depends(get_db)):
+    return db.query(models.ClaimDocument).all()
 
+# ------------- GET DOCUMENTS BY CLAIM ID -------------
 @router.get("/{claim_id}", response_model=List[schemas.ClaimDocumentResponse])
-def get_documents_for_claim(
-    claim_id: UUID,
-    db: Session = Depends(get_db)
-):
-    documents = db.query(models.ClaimDocument).filter(models.ClaimDocument.claim_id == claim_id).all()
-    return documents or []
+def get_documents_by_claim(claim_id: str, db: Session = Depends(get_db)):
+    # Convert to UUID
+    try:
+        claim_uuid = UUID(claim_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid claim_id format")
 
+    # Query documents
+    docs = db.query(models.ClaimDocument).filter(models.ClaimDocument.claim_id == claim_uuid).all()
+    if not docs:
+        raise HTTPException(status_code=404, detail="No documents found for this claim")
+    return docs
+
+@router.get("/download/{document_id}")
+def download_document(document_id: str, db: Session = Depends(get_db)):
+    try:
+        doc_uuid = UUID(document_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid document_id format")
+
+    doc = db.query(models.ClaimDocument).filter(models.ClaimDocument.document_id == doc_uuid).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    return StreamingResponse(BytesIO(doc.file_data), media_type=doc.content_type, headers={
+        "Content-Disposition": f"inline; filename={doc.file_name}"
+    })
+
+# ------------------- UPLOAD DOCUMENT -------------------
 @router.post("/upload", response_model=schemas.ClaimDocumentResponse)
-async def upload_claim_document(
-    claim_id: UUID = Form(...),
+async def upload_document(
+    claim_id: str = Form(...),
     document_type: str = Form(...),
-    description: str = Form(None),
+    description: str = Form(""),
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    if file.content_type not in ["application/pdf", "image/jpeg", "image/png"]:
-        raise HTTPException(status_code=400, detail="Unsupported file type. Allowed types: PDF, JPEG, PNG.")
+    # Convert claim_id to UUID
+    try:
+        claim_uuid = UUID(claim_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid claim_id format")
 
+    # Read file bytes
     file_data = await file.read()
-    if len(file_data) > 10 * 1024 * 1024:  # 10MB limit
-        raise HTTPException(status_code=400, detail="File size exceeds 10MB limit.")
 
-    claim = db.query(models.Claim).filter(models.Claim.claim_id == claim_id).first()
-    if not claim:
-        raise HTTPException(status_code=404, detail="Claim not found.")
-
-    # OCR extraction
-    extracted_text = ocr_extract_text(file_data, file.content_type)
-
-    # PII redaction
-    redacted_text = redact_pii(extracted_text)
-
+    # Create new document
     new_doc = models.ClaimDocument(
-        claim_id=claim_id,
+        claim_id=claim_uuid,
         document_type=document_type,
         file_name=file.filename,
-        file_data=file_data,
         content_type=file.content_type,
         description=description,
-        ocr_redacted_text=redacted_text
+        file_data=file_data,
+        uploaded_at=datetime.utcnow()
     )
+
     db.add(new_doc)
     db.commit()
     db.refresh(new_doc)
-
     return new_doc
