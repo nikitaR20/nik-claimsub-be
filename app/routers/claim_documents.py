@@ -6,6 +6,8 @@ from uuid import UUID
 from datetime import datetime
 from app import models, schemas
 from app.database import get_db
+from io import BytesIO
+from fastapi.responses import StreamingResponse
 
 router = APIRouter(prefix="/claim-documents", tags=["Claim Documents"])
 
@@ -28,6 +30,21 @@ def get_documents_by_claim(claim_id: str, db: Session = Depends(get_db)):
     if not docs:
         raise HTTPException(status_code=404, detail="No documents found for this claim")
     return docs
+
+@router.get("/download/{document_id}")
+def download_document(document_id: str, db: Session = Depends(get_db)):
+    try:
+        doc_uuid = UUID(document_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid document_id format")
+
+    doc = db.query(models.ClaimDocument).filter(models.ClaimDocument.document_id == doc_uuid).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    return StreamingResponse(BytesIO(doc.file_data), media_type=doc.content_type, headers={
+        "Content-Disposition": f"inline; filename={doc.file_name}"
+    })
 
 # ------------------- UPLOAD DOCUMENT -------------------
 @router.post("/upload", response_model=schemas.ClaimDocumentResponse)

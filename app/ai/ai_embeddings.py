@@ -20,7 +20,7 @@ if DATABASE_URL.startswith("postgres://"):
 
 engine = create_engine(DATABASE_URL)
 MODEL_PATH = os.getenv("MISTRAL_MODEL_PATH")
-SEARCH_MODE = os.getenv("SEARCH_MODE", "ai")
+SEARCH_MODE = os.getenv("SEARCH_MODE")
 
 # Load LLaMA for embeddings
 llm = Llama(model_path=MODEL_PATH, embedding=True, n_threads=4)

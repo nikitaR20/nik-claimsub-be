@@ -3,9 +3,11 @@ import numpy as np
 import faiss
 from .utils import load_table
 from .ai_embeddings import embed_text, ICD_FAISS_PATH, PROC_FAISS_PATH, precompute_embeddings
+from dotenv import load_dotenv
+#SEARCH_MODE = "faiss"  # default to FAISS search
 
-SEARCH_MODE = "faiss"  # default to FAISS search
-
+load_dotenv()
+SEARCH_MODE = os.getenv("SEARCH_MODE")
 # --- Load tables ---
 icd10_df = load_table("icd10_codes")
 proc_df = load_table("procedural_codes")
