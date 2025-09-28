@@ -1,1 +1,0 @@
-\COPY risk_ratings(risk_id, name, description,created_at,updated_at) FROM 'C:/full/path/to/nik-claimsub-be/csv/risk_ratings.csv' DELIMITER ',' CSV HEADER;
