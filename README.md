@@ -114,7 +114,6 @@ SECRET_KEY=your_secret_key_here
 
 ## 🛠 Step 6: Load CSV Data into Database
 
-Perfect 👍 Thanks for clarifying. Based on your steps, here’s a **super beginner-friendly README section** for **loading CSV data into PostgreSQL using pgAdmin**.
 
 ---
 
